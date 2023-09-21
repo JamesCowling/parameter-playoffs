@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 
-export const addSample = internalMutation({
+export const add = internalMutation({
   args: {
     prompt: v.id("prompts"),
     modelName: v.string(),
@@ -29,7 +29,6 @@ export const addSample = internalMutation({
       .query("samples")
       .withIndex("prompt", (q) => q.eq("prompt", prompt))
       .collect();
-    // XXX this is not actually correct for now
     if (samples.length >= models.length) {
       await ctx.db.patch(prompt, { generated: true });
     }
@@ -68,13 +67,20 @@ export const getBatch = query({
       if (leftUrl === null || rightUrl === null) {
         throw new Error("failed to get image url");
       }
+      const leftModel = await ctx.db.get(left.model);
+      const rightModel = await ctx.db.get(right.model);
+      if (leftModel === null || rightModel === null) {
+        throw new Error("failed to get model");
+      }
       const ret = {
         prompt: prompt.text,
         promptId: prompt._id,
         left: leftUrl,
         leftId: left._id,
+        leftModel: leftModel.name,
         right: rightUrl,
         rightId: right._id,
+        rightModel: rightModel.name,
       };
       return ret;
     });
@@ -94,10 +100,25 @@ export const vote = mutation({
     if (winner === null || loser === null) {
       throw new Error("sample not found");
     }
+    if (winner.prompt !== loser.prompt) {
+      throw new Error("samples do not match");
+    }
+    const winningModel = await ctx.db.get(winner.model);
+    const losingModel = await ctx.db.get(loser.model);
+    if (winningModel === null || losingModel === null) {
+      throw new Error("model not found");
+    }
     await ctx.db.patch(winnerId, {
       totalVotes: winner.totalVotes + 1,
       votesFor: winner.votesFor + 1,
     });
     await ctx.db.patch(loserId, { totalVotes: loser.totalVotes + 1 });
+    await ctx.db.patch(winningModel._id, {
+      totalVotes: winningModel.totalVotes + 1,
+      votesFor: winningModel.votesFor + 1,
+    });
+    await ctx.db.patch(losingModel._id, {
+      totalVotes: losingModel.totalVotes + 1,
+    });
   },
 });

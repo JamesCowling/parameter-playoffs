@@ -9,6 +9,8 @@ export default defineSchema({
 
   models: defineTable({
     name: v.string(),
+    totalVotes: v.number(),
+    votesFor: v.number(),
   }),
 
   samples: defineTable({

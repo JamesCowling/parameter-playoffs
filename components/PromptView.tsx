@@ -3,7 +3,7 @@ import { api } from "../convex/_generated/api";
 import { useState } from "react";
 
 export function PromptView() {
-  const prompts = useQuery(api.prompts.getPrompts);
+  const prompts = useQuery(api.prompts.list);
   const add = useMutation(api.prompts.add);
   const [newPrompt, setNewPrompt] = useState("");
 

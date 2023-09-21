@@ -14,9 +14,11 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as openai from "../openai";
+import type * as dalle from "../dalle";
+import type * as models from "../models";
 import type * as prompts from "../prompts";
 import type * as samples from "../samples";
+import type * as stablediffusion from "../stablediffusion";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -27,9 +29,11 @@ import type * as samples from "../samples";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  openai: typeof openai;
+  dalle: typeof dalle;
+  models: typeof models;
   prompts: typeof prompts;
   samples: typeof samples;
+  stablediffusion: typeof stablediffusion;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

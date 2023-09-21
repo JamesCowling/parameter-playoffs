@@ -11,12 +11,15 @@ export function VoteView() {
       promptId: Id<"prompts">;
       left: string;
       leftId: Id<"samples">;
+      leftModel: string;
       right: string;
       rightId: Id<"samples">;
+      rightModel: string;
     }[]
   >([]);
   const [offset, setOffset] = useState(0);
   const [fetching, setFetching] = useState(false);
+  const [lastWinner, setLastWinner] = useState("");
 
   // Prefectching.
   async function prefetch() {
@@ -47,11 +50,13 @@ export function VoteView() {
     if (offset >= batch.length) return;
     const leftId = batch[offset].leftId;
     const rightId = batch[offset].rightId;
+    const leftModel = batch[offset].leftModel;
+    const rightModel = batch[offset].rightModel;
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === "ArrowLeft") {
-        handleVote(leftId, rightId);
+        handleVote(leftId, rightId, leftModel);
       } else if (event.key === "ArrowRight") {
-        handleVote(rightId, leftId);
+        handleVote(rightId, leftId, rightModel);
       }
     };
     document.addEventListener("keydown", handleKeyPress);
@@ -61,9 +66,14 @@ export function VoteView() {
   }, [offset]);
 
   const vote = useMutation(api.samples.vote);
-  async function handleVote(winnerId: Id<"samples">, loserId: Id<"samples">) {
+  async function handleVote(
+    winnerId: Id<"samples">,
+    loserId: Id<"samples">,
+    winningModel: string
+  ) {
     console.log(`voting with winnerId ${winnerId} and loserId ${loserId}`);
     await vote({ winnerId, loserId });
+    setLastWinner(winningModel);
     setOffset(offset + 1);
   }
 
@@ -71,12 +81,17 @@ export function VoteView() {
     <div>
       <p>Click to vote or use left/right arrows.</p>
       <h2>{pair?.prompt}</h2>
-      <button onClick={() => handleVote(pair.leftId, pair.rightId)}>
+      <button
+        onClick={() => handleVote(pair.leftId, pair.rightId, pair.leftModel)}
+      >
         <img src={pair?.left} />
       </button>
-      <button onClick={() => handleVote(pair.rightId, pair.leftId)}>
+      <button
+        onClick={() => handleVote(pair.rightId, pair.leftId, pair.rightModel)}
+      >
         <img src={pair?.right} />
       </button>
+      <h2>{lastWinner} won!</h2>
     </div>
   );
 }

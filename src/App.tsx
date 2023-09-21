@@ -1,11 +1,11 @@
-import { PromptView } from "../components/PromptView";
 import { VoteView } from "../components/VoteView";
+import { StatsView } from "../components/StatsView";
 
 function App() {
   return (
     <div>
       <VoteView />
-      <PromptView />
+      <StatsView />
     </div>
   );
 }
