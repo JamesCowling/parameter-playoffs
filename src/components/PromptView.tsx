@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../convex/_generated/api";
 import { useState } from "react";
+import { api } from "../../convex/_generated/api";
 
 export function PromptView() {
   const prompts = useQuery(api.prompts.list);

@@ -1,5 +1,5 @@
-import { VoteView } from "../components/VoteView";
-import { StatsView } from "../components/StatsView";
+import { StatsView } from "./components/StatsView";
+import { VoteView } from "./components/VoteView";
 
 function App() {
   return (
