@@ -1,7 +1,7 @@
 import { useConvex, useMutation } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataConfig";
+import { Id } from "../../convex/_generated/dataModel";
 
 function getOffset(n: number) {
   let offset = 0;

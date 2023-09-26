@@ -9,7 +9,8 @@ export function StatsView() {
       <h3>Stats</h3>
       {stats?.map((config) => (
         <div key={config.name}>
-          {config.name}: {config.winPct.toFixed(1)}%
+          {config.name}: {config.winPct.toFixed(1)}% ({config.votesFor}/
+          {config.totalVotes})
         </div>
       ))}
     </div>
