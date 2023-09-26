@@ -14,7 +14,6 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as dalle from "../dalle";
 import type * as models from "../models";
 import type * as prompts from "../prompts";
 import type * as samples from "../samples";
@@ -29,7 +28,6 @@ import type * as stablediffusion from "../stablediffusion";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  dalle: typeof dalle;
   models: typeof models;
   prompts: typeof prompts;
   samples: typeof samples;

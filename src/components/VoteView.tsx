@@ -6,20 +6,12 @@ import { Id } from "../../convex/_generated/dataModel";
 function getOffset(n: number) {
   let offset = 0;
   for (let i = 0; i < n; i++) {
-    offset += 6 / (i + 1);
+    offset += 3 / (i + 1);
   }
   return offset;
 }
 
-function ImageStack({
-  onClick,
-  images,
-  left,
-}: {
-  onClick: any;
-  images: string[];
-  left: boolean;
-}) {
+function ImageStack({ onClick, images }: { onClick: any; images: string[] }) {
   const [isPressed, setIsPressed] = useState(false);
 
   const handleMouseDown = () => {
@@ -40,9 +32,6 @@ function ImageStack({
     }
   };
 
-  let mirror = -1;
-  if (left) mirror = 1;
-
   return (
     <button
       onMouseDown={handleMouseDown}
@@ -56,9 +45,8 @@ function ImageStack({
         <img
           key={url}
           style={{
-            marginLeft: `${mirror * getOffset(index)}px`,
+            marginLeft: `${getOffset(index)}px`,
             marginTop: `${getOffset(index)}px`,
-            transform: `rotate(${mirror * index * -0.2}deg)`,
             filter: `brightness(${100 - index * 5}%)`,
             zIndex: -10 * index,
           }}
@@ -68,7 +56,6 @@ function ImageStack({
           src={url}
         />
       ))}
-      {isPressed && <div className="absolute top-50 left-0">Dall-E</div>}
     </button>
   );
 }
@@ -89,6 +76,7 @@ export function VoteView() {
   >([]);
   const [offset, setOffset] = useState(0);
   const [fetching, setFetching] = useState(false);
+  // TODO show the last winner
   const [lastWinner, setLastWinner] = useState("");
 
   // Prefectching.
@@ -160,14 +148,16 @@ export function VoteView() {
       <ImageStack
         onClick={() => handleVote(pair.leftId, pair.rightId, pair.leftModel)}
         images={stack.map((prompt) => prompt.left)}
-        left={true}
       />
 
       <ImageStack
         onClick={() => handleVote(pair.rightId, pair.leftId, pair.rightModel)}
         images={stack.map((prompt) => prompt.right)}
-        left={false}
       />
+
+      <p>
+        {pair?.leftModel} vs {pair?.rightModel}
+      </p>
       <p className="mx-8 mt-2 text-xl">
         Click to vote or use left/right arrows.
       </p>

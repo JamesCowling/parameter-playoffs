@@ -3,9 +3,14 @@ import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
+// Scheduler in DDIM, K_EULER, DPMSolverMultistep, K_EULER_ANCESTRAL, PNDM, KLMS
 export const generate = internalAction({
-  args: { prompt: v.string(), promptId: v.id("prompts") },
-  handler: async (ctx, { prompt, promptId }) => {
+  args: {
+    prompt: v.string(),
+    promptId: v.id("prompts"),
+    scheduler: v.string(),
+  },
+  handler: async (ctx, { prompt, promptId, scheduler }) => {
     if (!process.env.REPLICATE_API_TOKEN) {
       throw new Error(
         "Add REPLICATE_API_TOKEN to your environment variables: " +
@@ -25,6 +30,7 @@ export const generate = internalAction({
           prompt,
           height: 512,
           width: 512,
+          scheduler: scheduler,
         },
       }
     )) as [string];
@@ -41,7 +47,7 @@ export const generate = internalAction({
 
     await ctx.runMutation(internal.samples.add, {
       prompt: promptId,
-      modelName: "Stable-Diffusion",
+      modelName: scheduler,
       storageId,
     });
   },
