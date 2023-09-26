@@ -4,32 +4,32 @@ import { internalMutation, mutation, query } from "./_generated/server";
 export const add = internalMutation({
   args: {
     prompt: v.id("prompts"),
-    modelName: v.string(),
+    configName: v.string(),
     storageId: v.string(),
   },
-  handler: async (ctx, { prompt, modelName, storageId }) => {
-    const model = await ctx.db
-      .query("models")
-      .filter((q) => q.eq(q.field("name"), modelName))
+  handler: async (ctx, { prompt, configName, storageId }) => {
+    const config = await ctx.db
+      .query("configs")
+      .filter((q) => q.eq(q.field("name"), configName))
       .first();
-    if (model === null) {
-      throw new Error(`model ${modelName} not found`);
+    if (config === null) {
+      throw new Error(`config ${configName} not found`);
     }
     await ctx.db.insert("samples", {
       prompt,
-      model: model._id,
+      config: config._id,
       storageId,
       totalVotes: 0,
       votesFor: 0,
     });
 
-    // Mark prompt as generated if all models have been sampled.
-    const models = await ctx.db.query("models").collect();
+    // Mark prompt as generated if all configs have been sampled.
+    const configs = await ctx.db.query("configs").collect();
     const samples = await ctx.db
       .query("samples")
       .withIndex("prompt", (q) => q.eq("prompt", prompt))
       .collect();
-    if (samples.length >= models.length) {
+    if (samples.length >= configs.length) {
       await ctx.db.patch(prompt, { generated: true });
     }
   },
@@ -67,20 +67,20 @@ export const getBatch = query({
       if (leftUrl === null || rightUrl === null) {
         throw new Error("failed to get image url");
       }
-      const leftModel = await ctx.db.get(left.model);
-      const rightModel = await ctx.db.get(right.model);
-      if (leftModel === null || rightModel === null) {
-        throw new Error("failed to get model");
+      const leftConfig = await ctx.db.get(left.config);
+      const rightConfig = await ctx.db.get(right.config);
+      if (leftConfig === null || rightConfig === null) {
+        throw new Error("failed to get config");
       }
       const ret = {
         prompt: prompt.text,
         promptId: prompt._id,
         left: leftUrl,
         leftId: left._id,
-        leftModel: leftModel.name,
+        leftConfig: leftConfig.name,
         right: rightUrl,
         rightId: right._id,
-        rightModel: rightModel.name,
+        rightConfig: rightConfig.name,
       };
       return ret;
     });
@@ -103,22 +103,22 @@ export const vote = mutation({
     if (winner.prompt !== loser.prompt) {
       throw new Error("samples do not match");
     }
-    const winningModel = await ctx.db.get(winner.model);
-    const losingModel = await ctx.db.get(loser.model);
-    if (winningModel === null || losingModel === null) {
-      throw new Error("model not found");
+    const winningConfig = await ctx.db.get(winner.config);
+    const losingConfig = await ctx.db.get(loser.config);
+    if (winningConfig === null || losingConfig === null) {
+      throw new Error("config not found");
     }
     await ctx.db.patch(winnerId, {
       totalVotes: winner.totalVotes + 1,
       votesFor: winner.votesFor + 1,
     });
     await ctx.db.patch(loserId, { totalVotes: loser.totalVotes + 1 });
-    await ctx.db.patch(winningModel._id, {
-      totalVotes: winningModel.totalVotes + 1,
-      votesFor: winningModel.votesFor + 1,
+    await ctx.db.patch(winningConfig._id, {
+      totalVotes: winningConfig.totalVotes + 1,
+      votesFor: winningConfig.votesFor + 1,
     });
-    await ctx.db.patch(losingModel._id, {
-      totalVotes: losingModel.totalVotes + 1,
+    await ctx.db.patch(losingConfig._id, {
+      totalVotes: losingConfig.totalVotes + 1,
     });
   },
 });

@@ -47,7 +47,7 @@ export const generate = internalAction({
 
     await ctx.runMutation(internal.samples.add, {
       prompt: promptId,
-      modelName: scheduler,
+      configName: scheduler,
       storageId,
     });
   },

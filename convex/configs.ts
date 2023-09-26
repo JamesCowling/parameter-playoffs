@@ -3,13 +3,13 @@ import { query } from "./_generated/server";
 export const stats = query({
   args: {},
   handler: async (ctx, args) => {
-    const models = await ctx.db.query("models").collect();
-    const stats = models.map((model) => {
+    const configs = await ctx.db.query("configs").collect();
+    const stats = configs.map((config) => {
       return {
-        name: model.name,
-        winPct: 100 * (model.votesFor / model.totalVotes),
-        totalVotes: model.totalVotes,
-        votesFor: model.votesFor,
+        name: config.name,
+        winPct: 100 * (config.votesFor / config.totalVotes),
+        totalVotes: config.totalVotes,
+        votesFor: config.votesFor,
       };
     });
     stats.sort((a, b) => {

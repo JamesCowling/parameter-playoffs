@@ -7,7 +7,7 @@ export default defineSchema({
     generated: v.boolean(),
   }).index("generated", ["generated"]),
 
-  models: defineTable({
+  configs: defineTable({
     name: v.string(),
     totalVotes: v.number(),
     votesFor: v.number(),
@@ -15,7 +15,7 @@ export default defineSchema({
 
   samples: defineTable({
     prompt: v.id("prompts"),
-    model: v.id("models"),
+    config: v.id("configs"),
     storageId: v.string(),
     totalVotes: v.number(),
     votesFor: v.number(),

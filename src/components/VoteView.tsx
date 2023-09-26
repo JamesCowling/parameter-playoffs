@@ -1,7 +1,7 @@
 import { useConvex, useMutation } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
+import { Id } from "../../convex/_generated/dataConfig";
 
 function getOffset(n: number) {
   let offset = 0;
@@ -68,10 +68,10 @@ export function VoteView() {
       promptId: Id<"prompts">;
       left: string;
       leftId: Id<"samples">;
-      leftModel: string;
+      leftConfig: string;
       right: string;
       rightId: Id<"samples">;
-      rightModel: string;
+      rightConfig: string;
     }[]
   >([]);
   const [offset, setOffset] = useState(0);
@@ -109,13 +109,13 @@ export function VoteView() {
     if (offset >= batch.length) return;
     const leftId = batch[offset].leftId;
     const rightId = batch[offset].rightId;
-    const leftModel = batch[offset].leftModel;
-    const rightModel = batch[offset].rightModel;
+    const leftConfig = batch[offset].leftConfig;
+    const rightConfig = batch[offset].rightConfig;
     const handleKeyPress = (event: KeyboardEvent) => {
       if (event.key === "ArrowLeft") {
-        handleVote(leftId, rightId, leftModel);
+        handleVote(leftId, rightId, leftConfig);
       } else if (event.key === "ArrowRight") {
-        handleVote(rightId, leftId, rightModel);
+        handleVote(rightId, leftId, rightConfig);
       }
     };
     document.addEventListener("keydown", handleKeyPress);
@@ -128,11 +128,11 @@ export function VoteView() {
   async function handleVote(
     winnerId: Id<"samples">,
     loserId: Id<"samples">,
-    winningModel: string
+    winningConfig: string
   ) {
     console.log(`voting with winnerId ${winnerId} and loserId ${loserId}`);
     await vote({ winnerId, loserId });
-    setLastWinner(winningModel);
+    setLastWinner(winningConfig);
     setOffset(offset + 1);
   }
 
@@ -146,17 +146,17 @@ export function VoteView() {
       </h2>
 
       <ImageStack
-        onClick={() => handleVote(pair.leftId, pair.rightId, pair.leftModel)}
+        onClick={() => handleVote(pair.leftId, pair.rightId, pair.leftConfig)}
         images={stack.map((prompt) => prompt.left)}
       />
 
       <ImageStack
-        onClick={() => handleVote(pair.rightId, pair.leftId, pair.rightModel)}
+        onClick={() => handleVote(pair.rightId, pair.leftId, pair.rightConfig)}
         images={stack.map((prompt) => prompt.right)}
       />
 
       <p>
-        {pair?.leftModel} vs {pair?.rightModel}
+        {pair?.leftConfig} vs {pair?.rightConfig}
       </p>
       <p className="mx-8 mt-2 text-xl">
         Click to vote or use left/right arrows.
