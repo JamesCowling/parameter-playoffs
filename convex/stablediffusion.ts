@@ -22,6 +22,11 @@ export const generate = internalAction({
       auth: process.env.REPLICATE_API_TOKEN,
     });
 
+    // We choose the same seed every time so the images look mostly the same
+    // except for the scheduler differences. We could change this to a random
+    // seed to make each image look different. That might make the app more fun
+    // while still giving accurate results eventually, albeit with much higher
+    // noise initially.
     console.log(`Generating Stable-Diffusion image for prompt: ${prompt}`);
     const response = (await replicate.run(
       "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4",
@@ -31,6 +36,7 @@ export const generate = internalAction({
           height: 512,
           width: 512,
           scheduler: scheduler,
+          seed: 0, // Same seed every
         },
       }
     )) as [string];

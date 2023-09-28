@@ -42,7 +42,6 @@ function shuffle(array: any[]) {
   }
 }
 
-// TODO change this to be stable for a session so you get to see all the prompts
 export const getBatch = query({
   args: {},
   handler: async (ctx, args) => {

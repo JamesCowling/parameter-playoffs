@@ -1,13 +1,23 @@
-import { StatsView } from "./components/StatsView";
+import { Route, BrowserRouter, Routes } from "react-router-dom";
 import { VoteView } from "./components/VoteView";
+import { StatsView } from "./components/StatsView";
+import Root from "./routes/root";
+import PromptView from "./components/PromptView";
 
-function App() {
+// const a = createBrowserRouter();
+
+// const { RouterProvider: BrowserRouter, Routes, Route } = createBrowserRouter();
+
+export default function App() {
   return (
-    <div>
-      <VoteView />
-      <StatsView />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Root />}>
+          <Route index element={<VoteView />} />
+          <Route path="stats" element={<StatsView />} />
+          <Route path="prompts" element={<PromptView />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
-
-export default App;

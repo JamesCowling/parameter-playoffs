@@ -138,9 +138,6 @@ export function VoteView() {
 
   return (
     <div className="text-gray-900">
-      <h1 className="text-4xl font-bold tracking-tight mx-8 mt-12 mb-8">
-        Hot or Bot?
-      </h1>
       <h2 className="leading-7 text-3xl font-bold mx-8">
         Prompt: <span className="text-sky-700">{pair?.prompt}</span>
       </h2>

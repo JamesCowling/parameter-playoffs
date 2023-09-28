@@ -9,6 +9,32 @@ export const list = query({
   },
 });
 
+// XXX need to sort this better
+export const listWithSamples = query({
+  args: {},
+  handler: async (ctx, args) => {
+    const prompts = await ctx.db.query("prompts").order("desc").collect();
+    const promptSamples = await Promise.all(
+      prompts.map(async (prompt) => {
+        const samples = await ctx.db
+          .query("samples")
+          .withIndex("prompt", (q) => q.eq("prompt", prompt._id))
+          .collect();
+        const samplesWithMetadata = await Promise.all(
+          samples.map(async (sample) => {
+            const url = await ctx.storage.getUrl(sample.storageId);
+            const config = await ctx.db.get(sample.config);
+            if (config == null) throw new Error("config not found");
+            return { ...sample, url, configName: config.name };
+          })
+        );
+        return { ...prompt, samples: samplesWithMetadata };
+      })
+    );
+    return promptSamples;
+  },
+});
+
 export const add = mutation({
   args: { text: v.string() },
   handler: async (ctx, { text }) => {

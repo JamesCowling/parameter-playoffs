@@ -24,6 +24,12 @@ export const reset = internalMutation({
       await ctx.db.patch(prompt._id, { generated: false });
     }
 
+    // Delete all configs.
+    const configs = await ctx.db.query("configs").collect();
+    for (const config of configs) {
+      await ctx.db.delete(config._id);
+    }
+
     // Insert all config names in the database.
     for (const config of CONFIGS) {
       await ctx.db.insert("configs", {
