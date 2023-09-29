@@ -6,7 +6,7 @@ export default function Root() {
   return (
     <div className="bg-gray-300 shadow">
       <Nav />
-      <div className="mx-4 my-8">
+      <div className="m-8">
         <Outlet />
       </div>
     </div>

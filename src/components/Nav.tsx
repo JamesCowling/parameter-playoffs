@@ -1,8 +1,22 @@
 import { Disclosure } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export default function Nav() {
+  const location = useLocation();
+
+  const currentClassLarge = (path: string) => {
+    return location.pathname === path
+      ? "border-indigo-500 text-gray-900"
+      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700";
+  };
+
+  const currentClassSmall = (path: string) => {
+    return location.pathname === path
+      ? "bg-indigo-50 border-indigo-500 text-indigo-700"
+      : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700";
+  };
+
   return (
     <Disclosure as="nav" className="bg-white shadow">
       {({ open }) => (
@@ -18,28 +32,35 @@ export default function Nav() {
                   />
                 </div>
                 <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                  {/* Current: "border-indigo-500 text-gray-900", Default: "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700" */}
                   <Link
                     to="/"
-                    className="inline-flex items-center border-b-2 border-indigo-500 px-1 pt-1 text-sm font-medium text-gray-900"
+                    className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${currentClassLarge(
+                      "/"
+                    )}`}
                   >
                     Vote
                   </Link>
                   <Link
                     to="/stats"
-                    className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                    className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${currentClassLarge(
+                      "/stats"
+                    )}`}
                   >
                     Stats
                   </Link>
                   <Link
                     to="/prompts"
-                    className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                    className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${currentClassLarge(
+                      "/prompts"
+                    )}`}
                   >
                     Prompts
                   </Link>
                   <Link
                     to="/hof"
-                    className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                    className={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${currentClassLarge(
+                      "/hof"
+                    )}`}
                   >
                     Hall of Fame
                   </Link>
@@ -62,32 +83,40 @@ export default function Nav() {
 
           <Disclosure.Panel className="sm:hidden">
             <div className="space-y-1 pb-3 pt-2">
-              {/* Current: "bg-indigo-50 border-indigo-500 text-indigo-700", Default: "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700" */}
+              {/* Current: "", Default: "" */}
               <Disclosure.Button
                 as="a"
                 href="/"
-                className="block border-l-4 border-indigo-500 bg-indigo-50 py-2 pl-3 pr-4 text-base font-medium text-indigo-700"
+                className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${currentClassSmall(
+                  "/"
+                )}`}
               >
                 Vote
               </Disclosure.Button>
               <Disclosure.Button
                 as="a"
                 href="/stats"
-                className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
+                className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${currentClassSmall(
+                  "/stats"
+                )}`}
               >
                 Stats
               </Disclosure.Button>
               <Disclosure.Button
                 as="a"
                 href="/prompts"
-                className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
+                className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${currentClassSmall(
+                  "/prompts"
+                )}`}
               >
                 Prompts
               </Disclosure.Button>
               <Disclosure.Button
                 as="a"
                 href="/hof"
-                className="block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700"
+                className={`block border-l-4 py-2 pl-3 pr-4 text-base font-medium ${currentClassSmall(
+                  "/hof"
+                )}`}
               >
                 Hall of Fame
               </Disclosure.Button>

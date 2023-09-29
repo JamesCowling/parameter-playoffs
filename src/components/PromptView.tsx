@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
+import { ImageBox } from "./ImageBox";
 
 function formatRating(totalVotes: number, votesFor: number) {
   if (totalVotes === 0) {
@@ -9,9 +10,7 @@ function formatRating(totalVotes: number, votesFor: number) {
   return `${votesFor} / ${totalVotes}`;
 }
 
-// XXX this will take forever to load, should make it paginated
-export default function PromptView() {
-  const prompts = useQuery(api.prompts.listWithSamples);
+export function PromptInput() {
   const add = useMutation(api.prompts.add);
   const [newPrompt, setNewPrompt] = useState("");
 
@@ -22,68 +21,88 @@ export default function PromptView() {
   };
 
   return (
-    <div>
-      <form onSubmit={addPrompt}>
+    <form onSubmit={addPrompt}>
+      <label className="block text-sm font-medium leading-6 text-gray-900">
+        Add new prompt
+      </label>
+      <div className="mt-2">
         <input
           type="text"
+          name="prompt"
+          id="prompt"
           required
           value={newPrompt}
+          className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+          placeholder="Very hungry caterpillar, watercolor painting"
           onChange={async (e) => {
             setNewPrompt(e.target.value);
           }}
-          placeholder="or add a new"
         />
-        <button type="submit" disabled={!newPrompt}>
-          Add
-        </button>
-      </form>
-      <ul role="list" className="divide-y divide-gray-100">
-        {prompts?.map((prompt) => (
-          <li key={prompt._id} className="flex justify-between gap-x-6 py-5">
-            <div className="flex min-w-0 gap-x-4">
-              <div className="min-w-0 flex-auto">
-                <p className="text-sm font-semibold leading-6 text-gray-900">
-                  {prompt.text}
-                </p>
-                <p className="mt-1 truncate text-xs leading-5 text-gray-500">
-                  Created {prompt._creationTime}
-                </p>
-              </div>
-            </div>
+      </div>
+    </form>
+  );
+}
 
-            <ul
-              role="list"
-              className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 lg:grid-cols-4 xl:gap-x-8"
-            >
-              {prompt.samples?.map((sample) => (
-                <li key={sample.url} className="relative">
-                  <div className="group block w-full overflow-hidden rounded-lg bg-gray-100 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 focus-within:ring-offset-gray-100">
-                    <img
-                      src={sample.url!}
-                      alt=""
-                      className="pointer-events-none object-cover group-hover:opacity-75"
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-0 focus:outline-none"
-                    >
-                      <span className="sr-only">
-                        View details for {sample.configName}
-                      </span>
-                    </button>
-                  </div>
-                  <p className="pointer-events-none mt-2 block truncate text-sm font-medium text-gray-900">
-                    {sample.configName}
-                  </p>
-                  <p className="pointer-events-none block text-sm font-medium text-gray-500">
-                    {formatRating(sample.totalVotes, sample.votesFor)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ul>
-    </div>
+function PromptList() {
+  const prompts = useQuery(api.prompts.listWithSamples);
+
+  return (
+    <ul role="list" className="divide-y divide-gray-100">
+      {prompts?.map((prompt) => (
+        <li key={prompt._id} className="flex justify-between gap-x-6 py-5">
+          <div className="flex min-w-0 gap-x-4">
+            <div className="min-w-0 flex-auto">
+              <p className="text-sm font-semibold leading-6 text-gray-900">
+                {prompt.text}
+              </p>
+              <p className="mt-1 truncate text-xs leading-5 text-gray-500">
+                Created {prompt._creationTime}
+              </p>
+            </div>
+          </div>
+
+          <ul
+            role="list"
+            className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 lg:grid-cols-4 xl:gap-x-8"
+          >
+            {prompt.samples?.map((sample) => (
+              <li key={sample.url}>
+                <ImageBox
+                  url={sample.url!}
+                  text={sample.configName}
+                  byline={formatRating(sample.totalVotes, sample.votesFor)}
+                  onClick={() => console.log("clicked")}
+                />
+              </li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// XXX this will take forever to load, should make it paginated
+export default function PromptView() {
+  return (
+    <>
+      <PromptInput />
+      <div className="px-4 sm:px-6 lg:px-8">
+        <div className="relative">
+          <div
+            className="absolute inset-0 flex items-center"
+            aria-hidden="true"
+          >
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-start">
+            <span className="bg-white pr-3 text-base font-semibold leading-6 text-gray-900">
+              Projects
+            </span>
+          </div>
+        </div>
+      </div>
+      <PromptList />
+    </>
   );
 }
