@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { ImageBox } from "./ImageBox";
+import { Separator } from "@/components/ui/separator";
 
 function formatRating(totalVotes: number, votesFor: number) {
   if (totalVotes === 0) {
@@ -87,21 +88,7 @@ export default function PromptView() {
   return (
     <>
       <PromptInput />
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="relative">
-          <div
-            className="absolute inset-0 flex items-center"
-            aria-hidden="true"
-          >
-            <div className="w-full border-t border-gray-300" />
-          </div>
-          <div className="relative flex justify-start">
-            <span className="bg-white pr-3 text-base font-semibold leading-6 text-gray-900">
-              Projects
-            </span>
-          </div>
-        </div>
-      </div>
+      <Separator />
       <PromptList />
     </>
   );
