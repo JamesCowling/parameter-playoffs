@@ -3,7 +3,7 @@ import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
-// Scheduler in DDIM, K_EULER, DPMSolverMultistep, K_EULER_ANCESTRAL, PNDM, KLMS
+// Scheduler in DDIM, DPMSolverMultistep, HeunDiscrete, KarrasDPM, K_EULER_ANCESTRAL, K_EULER, PNDM
 export const generate = internalAction({
   args: {
     prompt: v.string(),
@@ -29,14 +29,13 @@ export const generate = internalAction({
     // noise initially.
     console.log(`Generating Stable-Diffusion image for prompt: ${prompt}`);
     const response = (await replicate.run(
-      "stability-ai/stable-diffusion:ac732df83cea7fff18b8472768c88ad041fa750ff7682a21affe81863cbe77e4",
+      "stability-ai/sdxl:1bfb924045802467cf8869d96b231a12e6aa994abfe37e337c63a4e49a8c6c41",
       {
         input: {
           prompt,
-          height: 512,
-          width: 512,
           scheduler: scheduler,
-          seed: 0, // Same seed every
+          seed: 0, // Same seed every time to keep images similar.
+          refine: "base_image_refiner",
         },
       }
     )) as [string];

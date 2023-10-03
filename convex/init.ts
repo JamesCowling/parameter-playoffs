@@ -1,12 +1,13 @@
 import { internalMutation } from "./_generated/server";
 
 const CONFIGS = [
-  "KLMS",
-  "PNDM",
-  "K_EULER_ANCESTRAL",
-  "DPMSolverMultistep",
-  "K_EULER",
   "DDIM",
+  "DPMSolverMultistep",
+  "HeunDiscrete",
+  "KarrasDPM",
+  "K_EULER_ANCESTRAL",
+  "K_EULER",
+  "PNDM",
 ];
 
 // Delete all the stuff.
