@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+// Live updating summary stats.
 export function StatsView() {
   const stats = useQuery(api.configs.stats);
 

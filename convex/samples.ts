@@ -43,14 +43,14 @@ function shuffle(array: any[]) {
 }
 
 export const getBatch = query({
-  args: {},
-  handler: async (ctx, args) => {
+  args: { size: v.number() },
+  handler: async (ctx, { size }) => {
     const prompts = await ctx.db
       .query("prompts")
       .withIndex("generated", (q) => q.eq("generated", true))
       .collect();
     shuffle(prompts);
-    const promptBatch = prompts.slice(0, 10);
+    const promptBatch = prompts.slice(0, size);
 
     const batch = promptBatch.map(async (prompt) => {
       const samples = await ctx.db

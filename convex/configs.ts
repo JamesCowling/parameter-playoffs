@@ -1,8 +1,8 @@
 import { query } from "./_generated/server";
 
+// Stats on number of votes for each config.
 export const stats = query({
-  args: {},
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const configs = await ctx.db.query("configs").collect();
     const stats = configs.map((config) => {
       return {

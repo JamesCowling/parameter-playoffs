@@ -4,11 +4,9 @@ import Nav from "../components/Nav";
 
 export default function Root() {
   return (
-    <div className="bg-gray-300 shadow">
+    <div>
       <Nav />
-      <div className="m-8">
-        <Outlet />
-      </div>
+      <Outlet />
     </div>
   );
 }

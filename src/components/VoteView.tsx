@@ -2,10 +2,37 @@ import { useConvex, useMutation } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { ImageBox } from "./ImageBox";
 
+// Prefetch batches of this many samples.
+const BATCH_SIZE = 10;
+
+interface ImageButtonProps {
+  url: string;
+  subtitle: string;
+  onClick: () => void;
+}
+
+// Clickable inline image.
+export function ImageButton({ url, subtitle, onClick }: ImageButtonProps) {
+  return (
+    <div className="relative inline-block">
+      <div className="group rounded-lg">
+        <img
+          src={url}
+          className="group-hover:opacity-90 cursor-pointer"
+          onClick={onClick}
+        />
+      </div>
+      <p>{subtitle}</p>
+    </div>
+  );
+}
+
+// Main voting component to compare images with two different configs.
 export function VoteView() {
   const convex = useConvex();
+
+  // We maintain a batch of images and step through them to avoid latency.
   const [batch, setBatch] = useState<
     {
       prompt: string;
@@ -19,20 +46,18 @@ export function VoteView() {
     }[]
   >([]);
   const [offset, setOffset] = useState(0);
-  const [fetching, setFetching] = useState(false);
 
-  // Prefectching.
+  // Prefetching code.
+  const [fetching, setFetching] = useState(false);
   async function prefetch() {
-    if (fetching || batch.length > offset + 5) return;
-    console.log(
-      `prefetching with offset ${offset} and batch length ${batch.length}`
-    );
+    if (fetching || batch.length - offset >= BATCH_SIZE / 2) return;
     setFetching(true);
-    const newBatch = await convex.query(api.samples.getBatch);
-    const extendedBatch = [...batch, ...newBatch];
-    console.log(`extended batch length: ${extendedBatch.length}`);
-    setBatch(extendedBatch);
+    const newBatch = await convex.query(api.samples.getBatch, {
+      size: BATCH_SIZE,
+    });
+    setBatch([...batch, ...newBatch]);
     setFetching(false);
+    // Fetch the actual images.
     for (let i = 0; i < newBatch.length; i++) {
       const leftImage = new Image();
       leftImage.src = newBatch[i].left;
@@ -44,32 +69,15 @@ export function VoteView() {
     prefetch();
   }, [offset]);
 
-  const pair = batch[offset];
-
-  useEffect(() => {
-    if (offset >= batch.length) return;
-    const leftId = batch[offset].leftId;
-    const rightId = batch[offset].rightId;
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "ArrowLeft") {
-        handleVote(leftId, rightId);
-      } else if (event.key === "ArrowRight") {
-        handleVote(rightId, leftId);
-      }
-    };
-    document.addEventListener("keydown", handleKeyPress);
-    return () => {
-      document.removeEventListener("keydown", handleKeyPress);
-    };
-  }, [offset]);
-
+  // Voting code.
   const vote = useMutation(api.samples.vote);
   async function handleVote(winnerId: Id<"samples">, loserId: Id<"samples">) {
-    console.log(`voting with winnerId ${winnerId} and loserId ${loserId}`);
+    console.log(`Voting for sample ${winnerId} over sample ${loserId}`);
     await vote({ winnerId, loserId });
     setOffset(offset + 1);
   }
 
+  const pair = batch[offset];
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="sm:flex sm:items-center">
@@ -81,21 +89,17 @@ export function VoteView() {
         </div>
       </div>
 
-      <div className="mt-8">
-        <ImageBox
-          url={pair?.left}
-          text={pair?.leftConfig}
-          byline={"hello"}
-          onClick={() => handleVote(pair.leftId, pair.rightId)}
-        />
+      <ImageButton
+        url={pair?.left}
+        subtitle={pair?.leftConfig}
+        onClick={() => handleVote(pair.leftId, pair.rightId)}
+      />
 
-        <ImageBox
-          url={pair?.right}
-          text={pair?.rightConfig}
-          byline={"hello"}
-          onClick={() => handleVote(pair.rightId, pair.leftId)}
-        />
-      </div>
+      <ImageButton
+        url={pair?.right}
+        subtitle={pair?.rightConfig}
+        onClick={() => handleVote(pair.rightId, pair.leftId)}
+      />
     </div>
   );
 }

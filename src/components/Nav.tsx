@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -21,15 +21,14 @@ export default function Nav() {
       <NavigationMenu>
         <NavigationMenuList>
           {links.map((link) => (
-            <NavigationMenuItem>
-              <Link to={link.path}>
-                <NavigationMenuLink
-                  active={location.pathname === link.path}
-                  className={navigationMenuTriggerStyle()}
-                >
-                  {link.title}
-                </NavigationMenuLink>
-              </Link>
+            <NavigationMenuItem key={link.path}>
+              <NavigationMenuLink
+                href={link.path}
+                active={location.pathname === link.path}
+                className={navigationMenuTriggerStyle()}
+              >
+                {link.title}
+              </NavigationMenuLink>
             </NavigationMenuItem>
           ))}
         </NavigationMenuList>

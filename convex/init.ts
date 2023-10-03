@@ -9,6 +9,7 @@ const CONFIGS = [
   "DDIM",
 ];
 
+// Delete all the stuff.
 export const reset = internalMutation({
   args: {},
   handler: async (ctx, args) => {

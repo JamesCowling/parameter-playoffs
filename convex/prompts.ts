@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { paginationOptsValidator } from "convex/server";
 
 export const list = query({
   args: {},
@@ -11,11 +12,14 @@ export const list = query({
 
 // XXX need to sort this better
 export const listWithSamples = query({
-  args: {},
+  args: { paginationOpts: paginationOptsValidator },
   handler: async (ctx, args) => {
-    const prompts = await ctx.db.query("prompts").order("desc").collect();
+    const { page, isDone, continueCursor } = await ctx.db
+      .query("prompts")
+      .order("desc")
+      .paginate(args.paginationOpts);
     const promptSamples = await Promise.all(
-      prompts.map(async (prompt) => {
+      page.map(async (prompt) => {
         const samples = await ctx.db
           .query("samples")
           .withIndex("prompt", (q) => q.eq("prompt", prompt._id))
@@ -31,7 +35,7 @@ export const listWithSamples = query({
         return { ...prompt, samples: samplesWithMetadata };
       })
     );
-    return promptSamples;
+    return { page: promptSamples, isDone, continueCursor };
   },
 });
 

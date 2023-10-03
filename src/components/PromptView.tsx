@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { ImageBox } from "./ImageBox";
@@ -45,41 +45,50 @@ export function PromptInput() {
 }
 
 function PromptList() {
-  const prompts = useQuery(api.prompts.listWithSamples);
+  const { results, status, loadMore } = usePaginatedQuery(
+    api.prompts.listWithSamples,
+    {},
+    { initialNumItems: 3 }
+  );
 
   return (
-    <ul role="list" className="divide-y divide-gray-100">
-      {prompts?.map((prompt) => (
-        <li key={prompt._id} className="flex justify-between gap-x-6 py-5">
-          <div className="flex min-w-0 gap-x-4">
-            <div className="min-w-0 flex-auto">
-              <p className="text-sm font-semibold leading-6 text-gray-900">
-                {prompt.text}
-              </p>
-              <p className="mt-1 truncate text-xs leading-5 text-gray-500">
-                Created {prompt._creationTime}
-              </p>
+    <div>
+      <ul role="list" className="divide-y divide-gray-100">
+        {results?.map((prompt) => (
+          <li key={prompt._id} className="flex justify-between gap-x-6 py-5">
+            <div className="flex min-w-0 gap-x-4">
+              <div className="min-w-0 flex-auto">
+                <p className="text-sm font-semibold leading-6 text-gray-900">
+                  {prompt.text}
+                </p>
+                <p className="mt-1 truncate text-xs leading-5 text-gray-500">
+                  Created {prompt._creationTime}
+                </p>
+              </div>
             </div>
-          </div>
 
-          <ul
-            role="list"
-            className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 lg:grid-cols-4 xl:gap-x-8"
-          >
-            {prompt.samples?.map((sample) => (
-              <li key={sample.url}>
-                <ImageBox
-                  url={sample.url!}
-                  text={sample.configName}
-                  byline={formatRating(sample.totalVotes, sample.votesFor)}
-                  onClick={() => console.log("clicked")}
-                />
-              </li>
-            ))}
-          </ul>
-        </li>
-      ))}
-    </ul>
+            <ul
+              role="list"
+              className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-6 lg:grid-cols-4 xl:gap-x-8"
+            >
+              {prompt.samples?.map((sample) => (
+                <li key={sample.url}>
+                  <ImageBox
+                    url={sample.url!}
+                    text={sample.configName}
+                    byline={formatRating(sample.totalVotes, sample.votesFor)}
+                    onClick={() => console.log("clicked")}
+                  />
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
+      <button onClick={() => loadMore(3)} disabled={status !== "CanLoadMore"}>
+        Load More
+      </button>
+    </div>
   );
 }
 
