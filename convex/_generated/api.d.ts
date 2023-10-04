@@ -14,8 +14,8 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as configs from "../configs";
 import type * as init from "../init";
+import type * as params from "../params";
 import type * as prompts from "../prompts";
 import type * as samples from "../samples";
 import type * as stablediffusion from "../stablediffusion";
@@ -29,8 +29,8 @@ import type * as stablediffusion from "../stablediffusion";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  configs: typeof configs;
   init: typeof init;
+  params: typeof params;
   prompts: typeof prompts;
   samples: typeof samples;
   stablediffusion: typeof stablediffusion;

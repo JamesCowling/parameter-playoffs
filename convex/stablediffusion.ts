@@ -3,21 +3,19 @@ import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
-// Scheduler in DDIM, DPMSolverMultistep, HeunDiscrete, KarrasDPM, K_EULER_ANCESTRAL, K_EULER, PNDM
 export const generate = internalAction({
   args: {
     prompt: v.string(),
     promptId: v.id("prompts"),
-    scheduler: v.string(),
+    paramIds: v.array(v.id("params")),
   },
-  handler: async (ctx, { prompt, promptId, scheduler }) => {
+  handler: async (ctx, { prompt, promptId, paramIds }) => {
     if (!process.env.REPLICATE_API_TOKEN) {
       throw new Error(
         "Add REPLICATE_API_TOKEN to your environment variables: " +
           "https://docs.convex.dev/production/environment-variables"
       );
     }
-
     const replicate = new Replicate({
       auth: process.env.REPLICATE_API_TOKEN,
     });
@@ -27,16 +25,19 @@ export const generate = internalAction({
     // seed to make each image look different. That might make the app more fun
     // while still giving accurate results eventually, albeit with much higher
     // noise initially.
-    console.log(`Generating Stable-Diffusion image for prompt: ${prompt}`);
+    const params = await ctx.runQuery(internal.params.getBatch, { paramIds });
+    const input: {
+      [key: string]: string | number;
+    } = { prompt, seed: 0 };
+    for (const param of params) {
+      input[param.name] = param.value;
+    }
+    console.log(`Generating SDXL image with config ${JSON.stringify(input)}`);
+
     const response = (await replicate.run(
       "stability-ai/sdxl:1bfb924045802467cf8869d96b231a12e6aa994abfe37e337c63a4e49a8c6c41",
       {
-        input: {
-          prompt,
-          scheduler: scheduler,
-          seed: 0, // Same seed every time to keep images similar.
-          refine: "base_image_refiner",
-        },
+        input: input,
       }
     )) as [string];
     const url = response[0];
@@ -52,7 +53,7 @@ export const generate = internalAction({
 
     await ctx.runMutation(internal.samples.add, {
       prompt: promptId,
-      configName: scheduler,
+      params: paramIds,
       storageId,
     });
   },

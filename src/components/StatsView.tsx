@@ -10,15 +10,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// Live updating summary stats.
-export function StatsView() {
-  const stats = useQuery(api.configs.stats);
-
+function StatsTable({
+  name,
+  values,
+}: {
+  name: string;
+  values: {
+    value: string;
+    winPct: number;
+    totalVotes: number;
+    votesFor: number;
+  }[];
+}) {
   return (
     <Table>
-      <TableCaption>
-        Stable-Diffusion scheduling configs ranked by pairwise vote.
-      </TableCaption>
+      <TableCaption>{name}</TableCaption>
       <TableHeader>
         <TableRow>
           <TableHead>Config</TableHead>
@@ -28,17 +34,31 @@ export function StatsView() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {stats?.map((config) => (
-          <TableRow>
-            <TableCell className="font-medium">{config.name}</TableCell>
-            <TableCell className="text-right">{config.votesFor}</TableCell>
-            <TableCell className="text-right">{config.totalVotes}</TableCell>
+        {values.map((param) => (
+          <TableRow key={param.value}>
+            <TableCell className="font-medium">{param.value}</TableCell>
+            <TableCell className="text-right">{param.votesFor}</TableCell>
+            <TableCell className="text-right">{param.totalVotes}</TableCell>
             <TableCell className="text-right">
-              {config.winPct.toFixed(1)}%
+              {param.winPct.toFixed(1)}%
             </TableCell>
           </TableRow>
         ))}
       </TableBody>
     </Table>
+  );
+}
+
+// Live updating summary stats.
+export function StatsView() {
+  const stats = useQuery(api.params.stats);
+  if (!stats) return <div>Loading...</div>;
+
+  return (
+    <div>
+      {stats.map((s) => (
+        <StatsTable key={s.name} name={s.name} values={s.stats} />
+      ))}
+    </div>
   );
 }

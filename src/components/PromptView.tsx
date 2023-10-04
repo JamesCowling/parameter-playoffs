@@ -3,6 +3,7 @@ import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { ImageBox } from "./ImageBox";
 import { Separator } from "@/components/ui/separator";
+import { paramsToString } from "./VoteView";
 
 function formatRating(totalVotes: number, votesFor: number) {
   if (totalVotes === 0) {
@@ -75,7 +76,7 @@ function PromptList() {
                 <li key={sample.url}>
                   <ImageBox
                     url={sample.url!}
-                    text={sample.configName}
+                    text={paramsToString(sample.params)}
                     byline={formatRating(sample.totalVotes, sample.votesFor)}
                     onClick={() => console.log("clicked")}
                   />
@@ -92,7 +93,6 @@ function PromptList() {
   );
 }
 
-// XXX this will take forever to load, should make it paginated
 export default function PromptView() {
   return (
     <>

@@ -1,10 +1,10 @@
 import { useConvex, useMutation } from "convex/react";
 import { useEffect, useState } from "react";
 import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
+import { Doc, Id } from "../../convex/_generated/dataModel";
 
 // Prefetch batches of this many samples.
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 5;
 
 interface ImageButtonProps {
   url: string;
@@ -28,6 +28,10 @@ export function ImageButton({ url, subtitle, onClick }: ImageButtonProps) {
   );
 }
 
+export function paramsToString(params: Doc<"params">[]) {
+  return params.map((p) => `${p.name}=${p.value}`).join(", ");
+}
+
 // Main voting component to compare images with two different configs.
 export function VoteView() {
   const convex = useConvex();
@@ -36,13 +40,16 @@ export function VoteView() {
   const [batch, setBatch] = useState<
     {
       prompt: string;
-      promptId: Id<"prompts">;
-      left: string;
-      leftId: Id<"samples">;
-      leftConfig: string;
-      right: string;
-      rightId: Id<"samples">;
-      rightConfig: string;
+      left: {
+        url: string;
+        sample: Id<"samples">;
+        params: Doc<"params">[];
+      };
+      right: {
+        url: string;
+        sample: Id<"samples">;
+        params: Doc<"params">[];
+      };
     }[]
   >([]);
   const [offset, setOffset] = useState(0);
@@ -60,9 +67,9 @@ export function VoteView() {
     // Fetch the actual images.
     for (let i = 0; i < newBatch.length; i++) {
       const leftImage = new Image();
-      leftImage.src = newBatch[i].left;
+      leftImage.src = newBatch[i].left.url;
       const rightImage = new Image();
-      rightImage.src = newBatch[i].right;
+      rightImage.src = newBatch[i].right.url;
     }
   }
   useEffect(() => {
@@ -77,7 +84,9 @@ export function VoteView() {
     setOffset(offset + 1);
   }
 
+  if (batch.length === 0) return <div>Loading...</div>;
   const pair = batch[offset];
+
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="sm:flex sm:items-center">
@@ -85,20 +94,20 @@ export function VoteView() {
           <h1 className="text-base font-semibold leading-6 text-gray-900">
             Pick best image for prompt
           </h1>
-          <p className="mt-2 text-sm text-gray-700">{pair?.prompt}</p>
+          <p className="mt-2 text-sm text-gray-700">{pair.prompt}</p>
         </div>
       </div>
 
       <ImageButton
-        url={pair?.left}
-        subtitle={pair?.leftConfig}
-        onClick={() => handleVote(pair.leftId, pair.rightId)}
+        url={pair.left.url}
+        subtitle={paramsToString(pair.left.params)}
+        onClick={() => handleVote(pair.left.sample, pair.right.sample)}
       />
 
       <ImageButton
-        url={pair?.right}
-        subtitle={pair?.rightConfig}
-        onClick={() => handleVote(pair.rightId, pair.leftId)}
+        url={pair.right.url}
+        subtitle={paramsToString(pair.right.params)}
+        onClick={() => handleVote(pair.right.sample, pair.left.sample)}
       />
     </div>
   );

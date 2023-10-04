@@ -1,14 +1,17 @@
 import { internalMutation } from "./_generated/server";
 
-const CONFIGS = [
-  "DDIM",
-  "DPMSolverMultistep",
-  "HeunDiscrete",
-  "KarrasDPM",
-  "K_EULER_ANCESTRAL",
-  "K_EULER",
-  "PNDM",
-];
+const PARAMS = {
+  scheduler: [
+    "DDIM",
+    "DPMSolverMultistep",
+    "HeunDiscrete",
+    "KarrasDPM",
+    "K_EULER_ANCESTRAL",
+    "K_EULER",
+    "PNDM",
+  ],
+  refiner: ["no_refiner", "expert_ensemble_refiner", "base_image_refiner"],
+};
 
 // Delete all the stuff.
 export const reset = internalMutation({
@@ -26,19 +29,20 @@ export const reset = internalMutation({
       await ctx.db.patch(prompt._id, { generated: false });
     }
 
-    // Delete all configs.
-    const configs = await ctx.db.query("configs").collect();
-    for (const config of configs) {
-      await ctx.db.delete(config._id);
+    // Reset all params.
+    const params = await ctx.db.query("params").collect();
+    for (const param of params) {
+      await ctx.db.delete(param._id);
     }
-
-    // Insert all config names in the database.
-    for (const config of CONFIGS) {
-      await ctx.db.insert("configs", {
-        name: config,
-        totalVotes: 0,
-        votesFor: 0,
-      });
+    for (const [name, values] of Object.entries(PARAMS)) {
+      for (const value of values) {
+        await ctx.db.insert("params", {
+          name,
+          value,
+          votesFor: 0,
+          totalVotes: 0,
+        });
+      }
     }
   },
 });
