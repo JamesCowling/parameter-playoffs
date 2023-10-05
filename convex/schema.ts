@@ -2,10 +2,10 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
-  // A text prompt to generate an image for, e.g. "a cat in a field".
+  // A text prompt to generate an image for.
   prompts: defineTable({
     text: v.string(),
-    generated: v.boolean(),
+    generated: v.boolean(), // true if SAMPLES_PER_PROMPT have been generated
   }).index("generated", ["generated"]),
 
   // Various values for each configurable parameter of SDXL, currently just

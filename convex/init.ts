@@ -1,6 +1,6 @@
 import { internalMutation } from "./_generated/server";
 
-const PARAMS = {
+const DEFAULT_PARAMS = {
   scheduler: [
     "DDIM",
     "DPMSolverMultistep",
@@ -15,28 +15,24 @@ const PARAMS = {
 
 // Delete all the stuff.
 export const reset = internalMutation({
-  args: {},
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     // Delete all samples.
     const samples = await ctx.db.query("samples").collect();
-    for (const sample of samples) {
-      await ctx.db.delete(sample._id);
-    }
+    await Promise.all(samples.map((sample) => ctx.db.delete(sample._id)));
 
     // Mark all prompts as not generated.
     const prompts = await ctx.db.query("prompts").collect();
-    for (const prompt of prompts) {
-      await ctx.db.patch(prompt._id, { generated: false });
-    }
+    await Promise.all(
+      prompts.map((prompt) => ctx.db.patch(prompt._id, { generated: false }))
+    );
 
     // Reset all params.
     const params = await ctx.db.query("params").collect();
-    for (const param of params) {
-      await ctx.db.delete(param._id);
-    }
-    for (const [name, values] of Object.entries(PARAMS)) {
+    await Promise.all(params.map((param) => ctx.db.delete(param._id)));
+    const newParams = [];
+    for (const [name, values] of Object.entries(DEFAULT_PARAMS)) {
       for (const value of values) {
-        await ctx.db.insert("params", {
+        newParams.push({
           name,
           value,
           votesFor: 0,
@@ -44,5 +40,6 @@ export const reset = internalMutation({
         });
       }
     }
+    await Promise.all(newParams.map((param) => ctx.db.insert("params", param)));
   },
 });

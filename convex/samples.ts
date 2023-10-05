@@ -1,8 +1,12 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { getForSample as getParams } from "./params";
-import { NUM_SAMPLES } from "./prompts";
+import { shuffle } from "./utils";
 
+// Number of samples to generate per prompt.
+export const SAMPLES_PER_PROMPT = 3;
+
+// Add sample with the given params and prompt.
 export const add = internalMutation({
   args: {
     prompt: v.id("prompts"),
@@ -16,27 +20,20 @@ export const add = internalMutation({
       totalVotes: 0,
       votesFor: 0,
     });
-    for (const param of params) {
-      await ctx.db.insert("paramSamples", { param, sample });
-    }
+    await Promise.all(
+      params.map((param) => ctx.db.insert("paramSamples", { param, sample }))
+    );
 
     // Mark prompt as generated if all configs have been sampled.
     const samples = await ctx.db
       .query("samples")
       .withIndex("prompt", (q) => q.eq("prompt", prompt))
       .collect();
-    if (samples.length >= NUM_SAMPLES) {
+    if (samples.length >= SAMPLES_PER_PROMPT) {
       await ctx.db.patch(prompt, { generated: true });
     }
   },
 });
-
-export function shuffle(array: any[]) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-}
 
 // Fetch a set of random prompts and two random samples for each prompt.
 export const getBatch = query({
@@ -57,34 +54,34 @@ export const getBatch = query({
           .query("samples")
           .withIndex("prompt", (q) => q.eq("prompt", prompt._id))
           .collect();
-        shuffle(samples);
         if (samples.length < 2) throw new Error("Not enough images for prompt");
+        shuffle(samples);
 
         const left = samples[0];
-        const right = samples[1];
         const leftUrl = await ctx.storage.getUrl(left.storageId);
+        const leftParams = await getParams(ctx, { sample: left._id });
+
+        const right = samples[1];
         const rightUrl = await ctx.storage.getUrl(right.storageId);
+        const rightParams = await getParams(ctx, { sample: right._id });
+
         if (leftUrl === null || rightUrl === null) {
           throw new Error("failed to get image url");
         }
-        const leftParams = await getParams(ctx, { sample: left._id });
-        const rightParams = await getParams(ctx, { sample: right._id });
         if (leftParams.length === 0 || rightParams.length === 0) {
           throw new Error("failed to get params");
         }
 
-        const ret = {
+        return {
           prompt: prompt.text,
           left: { sample: left._id, url: leftUrl, params: leftParams },
           right: { sample: right._id, url: rightUrl, params: rightParams },
         };
-        return ret;
       })
     );
   },
 });
 
-// XXX i shouldn't increment win count for a param that isn't varied in a comparison
 // Increment votesFor for the winning sample and all its params. Increment
 // totalVotes for both samples and all their params.
 export const vote = mutation({
@@ -111,14 +108,23 @@ export const vote = mutation({
       votesFor: winner.votesFor + 1,
     });
     await ctx.db.patch(loserId, { totalVotes: loser.totalVotes + 1 });
-    for (const param of winnerParams) {
-      await ctx.db.patch(param._id, {
-        totalVotes: param.totalVotes + 1,
-        votesFor: param.votesFor + 1,
-      });
-    }
-    for (const param of loserParams) {
-      await ctx.db.patch(param._id, { totalVotes: param.totalVotes + 1 });
-    }
+
+    // XXX i shouldn't increment win count for a param that isn't varied in a comparison
+
+    await Promise.all(
+      winnerParams.map((param) =>
+        ctx.db.patch(param._id, {
+          totalVotes: param.totalVotes + 1,
+          votesFor: param.votesFor + 1,
+        })
+      )
+    );
+    await Promise.all(
+      loserParams.map((param) =>
+        ctx.db.patch(param._id, {
+          totalVotes: param.totalVotes + 1,
+        })
+      )
+    );
   },
 });

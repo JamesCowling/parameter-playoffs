@@ -3,6 +3,15 @@ import { internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 
+const MODEL =
+  "stability-ai/sdxl:1bfb924045802467cf8869d96b231a12e6aa994abfe37e337c63a4e49a8c6c41";
+
+type SDXLConfig = {
+  prompt: string;
+  seed: number;
+  [key: string]: string | number;
+};
+
 export const generate = internalAction({
   args: {
     prompt: v.string(),
@@ -20,36 +29,31 @@ export const generate = internalAction({
       auth: process.env.REPLICATE_API_TOKEN,
     });
 
-    // We choose the same seed every time so the images look mostly the same
-    // except for the scheduler differences. We could change this to a random
-    // seed to make each image look different. That might make the app more fun
-    // while still giving accurate results eventually, albeit with much higher
-    // noise initially.
-    const params = await ctx.runQuery(internal.params.getBatch, { paramIds });
-    const input: {
-      [key: string]: string | number;
-    } = { prompt, seed: 0 };
-    for (const param of params) {
-      input[param.name] = param.value;
-    }
+    // Fetch params and build SDXL config.
+    const params = await ctx.runQuery(internal.params.getForIds, {
+      ids: paramIds,
+    });
+    const input = params.reduce(
+      (acc, param) => {
+        acc[param.name] = param.value;
+        return acc;
+      },
+      { prompt, seed: 0 } as SDXLConfig
+    );
+
     console.log(`Generating SDXL image with config ${JSON.stringify(input)}`);
-
-    const response = (await replicate.run(
-      "stability-ai/sdxl:1bfb924045802467cf8869d96b231a12e6aa994abfe37e337c63a4e49a8c6c41",
-      {
-        input: input,
-      }
-    )) as [string];
-    const url = response[0];
-
+    const [url] = (await replicate.run(MODEL, { input })) as [string];
     const imageResponse = await fetch(url).catch((e) => {
       throw new Error("error from image fetch" + e);
     });
     if (!imageResponse.ok) {
       throw new Error(`failed to download: ${imageResponse.statusText}`);
     }
-    const image = await imageResponse.blob();
-    const storageId = await ctx.storage.store(image);
+
+    const storageId = await ctx.storage.store(await imageResponse.blob());
+
+    // Note that if the action fails at this point the image will be stored in
+    // Convex without any sample pointing to it.
 
     await ctx.runMutation(internal.samples.add, {
       prompt: promptId,

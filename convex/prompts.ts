@@ -2,20 +2,11 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { paginationOptsValidator } from "convex/server";
-import { shuffle } from "./samples";
-import { Id } from "./_generated/dataModel";
+import { SAMPLES_PER_PROMPT } from "./samples";
+import { Doc } from "./_generated/dataModel";
+import { shuffle } from "./utils";
 
-// Number of samples to generate per prompt.
-export const NUM_SAMPLES = 3;
-
-export const list = query({
-  args: {},
-  handler: async (ctx, args) => {
-    return await ctx.db.query("prompts").collect();
-  },
-});
-
-// XXX need to sort this better
+// Paginate over prompts with their samples and parameters.
 export const listWithSamples = query({
   args: { paginationOpts: paginationOptsValidator },
   handler: async (ctx, args) => {
@@ -23,6 +14,7 @@ export const listWithSamples = query({
       .query("prompts")
       .order("desc")
       .paginate(args.paginationOpts);
+
     const promptSamples = await Promise.all(
       page.map(async (prompt) => {
         const samples = await ctx.db
@@ -37,14 +29,12 @@ export const listWithSamples = query({
               .query("paramSamples")
               .withIndex("sample", (q) => q.eq("sample", sample._id))
               .collect();
+
             const params = await Promise.all(
-              paramSamples.map(async (paramSample) => {
-                const param = await ctx.db.get(paramSample.param);
-                if (!param) throw new Error("param not found");
-                return param;
-              })
+              paramSamples.map((paramSample) => ctx.db.get(paramSample.param))
             );
-            if (params.length == 0) throw new Error("params not found");
+            if (params.includes(null)) throw new Error("param(s) not found");
+
             return { ...sample, url, params };
           })
         );
@@ -55,16 +45,7 @@ export const listWithSamples = query({
   },
 });
 
-type Param = {
-  _id: Id<"params">;
-  _creationTime: number;
-  name: string;
-  value: string;
-  votesFor: number;
-  totalVotes: number;
-};
-
-// TODO clean up this code
+// Add a new prompt and schedule generating some random samples for it.
 export const add = mutation({
   args: { text: v.string() },
   handler: async (ctx, { text }) => {
@@ -77,26 +58,24 @@ export const add = mutation({
       if (!acc[param.name]) acc[param.name] = [];
       acc[param.name].push(param);
       return acc;
-    }, {} as { [name: string]: Param[] });
+    }, {} as { [name: string]: Doc<"params">[] });
 
     // Create all possible combinations of parameters.
     const values = Object.values(paramsByName);
-    const combos = values.reduce((acc: Param[][], current) => {
-      const temp: Param[][] = [];
-      for (const entry of current) {
-        for (const existing of acc) {
-          temp.push([...existing, entry]);
-        }
-      }
-      return acc.length ? temp : current.map((param) => [param]);
-    }, []);
+    const combos = values.reduce((acc, current) => {
+      return acc.length
+        ? acc.flatMap((existing) =>
+            current.map((param) => [...existing, param])
+          )
+        : current.map((param) => [param]);
+    }, [] as Doc<"params">[][]);
 
     // Take a sample of combinations.
-    if (combos.length < NUM_SAMPLES) {
+    if (combos.length < SAMPLES_PER_PROMPT) {
       throw new Error("not enough param combinations");
     }
     shuffle(combos);
-    const comboBatch = combos.slice(0, NUM_SAMPLES);
+    const comboBatch = combos.slice(0, SAMPLES_PER_PROMPT);
     const comboIdBatch = comboBatch.map((combo) =>
       combo.map((param) => param._id)
     );

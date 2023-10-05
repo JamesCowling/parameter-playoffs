@@ -65,12 +65,12 @@ export function VoteView() {
     setBatch([...batch, ...newBatch]);
     setFetching(false);
     // Fetch the actual images.
-    for (let i = 0; i < newBatch.length; i++) {
+    newBatch.forEach((sample) => {
       const leftImage = new Image();
-      leftImage.src = newBatch[i].left.url;
+      leftImage.src = sample.left.url;
       const rightImage = new Image();
-      rightImage.src = newBatch[i].right.url;
-    }
+      rightImage.src = sample.right.url;
+    });
   }
   useEffect(() => {
     prefetch();

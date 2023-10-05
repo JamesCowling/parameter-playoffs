@@ -2,18 +2,19 @@ import { v } from "convex/values";
 import { internalQuery, query } from "./_generated/server";
 import { Doc } from "./_generated/dataModel";
 
-// Stats on number of votes for each param.
-export const stats = query({
+// Fetch stats on number of votes for each param.
+export const getStats = query({
   handler: async (ctx) => {
-    // Fetch all params.
     const params = await ctx.db.query("params").collect();
 
     // Aggregate params by name.
-    const paramsByName = new Map<string, Doc<"params">[]>();
-    for (const param of params) {
-      const params = paramsByName.get(param.name) || [];
-      paramsByName.set(param.name, [...params, param]);
-    }
+    const paramsByName = params.reduce((acc, param) => {
+      if (!acc.has(param.name)) {
+        acc.set(param.name, []);
+      }
+      (acc.get(param.name) as Doc<"params">[]).push(param);
+      return acc;
+    }, new Map<string, Doc<"params">[]>());
 
     // Compute stats for each param.
     const statsByName = new Map<
@@ -25,7 +26,7 @@ export const stats = query({
         votesFor: number;
       }[]
     >();
-    for (const [name, values] of paramsByName.entries()) {
+    paramsByName.forEach((values, name) => {
       const stats = values.map((value) => {
         return {
           value: value.value,
@@ -34,22 +35,12 @@ export const stats = query({
           votesFor: value.votesFor,
         };
       });
-      stats.sort((a, b) => {
-        const winPctDiff = b.winPct - a.winPct;
-        if (winPctDiff !== 0) {
-          return winPctDiff;
-        }
-        return b.totalVotes - a.totalVotes;
-      });
+      stats.sort((a, b) => b.winPct - a.winPct || b.totalVotes - a.totalVotes);
       statsByName.set(name, stats);
-    }
+    });
 
-    // Convert statsByName to an array of objects since Convex doesn't support
-    // maps as return values.
-    return Array.from(statsByName.entries()).map(([name, stats]) => ({
-      name,
-      stats,
-    }));
+    // Convex doesn't currently support maps as return values.
+    return Array.from(statsByName).map(([name, stats]) => ({ name, stats }));
   },
 });
 
@@ -64,7 +55,7 @@ export const getForSample = query({
     const params = await Promise.all(
       paramSamples.map(async (paramSample) => {
         const param = await ctx.db.get(paramSample.param);
-        if (param === null) throw new Error("param not found");
+        if (!param) throw new Error("param not found");
         return param;
       })
     );
@@ -72,13 +63,14 @@ export const getForSample = query({
   },
 });
 
-export const getBatch = internalQuery({
-  args: { paramIds: v.array(v.id("params")) },
-  handler: async (ctx, { paramIds }) => {
+// Get parameter documents by ids.
+export const getForIds = internalQuery({
+  args: { ids: v.array(v.id("params")) },
+  handler: async (ctx, { ids }) => {
     return await Promise.all(
-      paramIds.map(async (paramId) => {
-        const param = await ctx.db.get(paramId);
-        if (param === null) throw new Error("param not found");
+      ids.map(async (id) => {
+        const param = await ctx.db.get(id);
+        if (!param) throw new Error("param not found");
         return param;
       })
     );

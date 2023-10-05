@@ -19,6 +19,7 @@ import type * as params from "../params";
 import type * as prompts from "../prompts";
 import type * as samples from "../samples";
 import type * as stablediffusion from "../stablediffusion";
+import type * as utils from "../utils";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   prompts: typeof prompts;
   samples: typeof samples;
   stablediffusion: typeof stablediffusion;
+  utils: typeof utils;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,
