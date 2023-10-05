@@ -29,11 +29,16 @@ export const listWithSamples = query({
               .query("paramSamples")
               .withIndex("sample", (q) => q.eq("sample", sample._id))
               .collect();
+            if (paramSamples.length == 0)
+              throw new Error("paramSamples not found");
 
             const params = await Promise.all(
-              paramSamples.map((paramSample) => ctx.db.get(paramSample.param))
+              paramSamples.map(async (paramSample) => {
+                const param = await ctx.db.get(paramSample.param);
+                if (!param) throw new Error("param not found");
+                return param;
+              })
             );
-            if (params.includes(null)) throw new Error("param(s) not found");
 
             return { ...sample, url, params };
           })

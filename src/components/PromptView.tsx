@@ -1,4 +1,4 @@
-import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
+import { useMutation, usePaginatedQuery } from "convex/react";
 import { useState } from "react";
 import { api } from "../../convex/_generated/api";
 import { ImageBox } from "./ImageBox";

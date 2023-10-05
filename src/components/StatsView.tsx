@@ -51,7 +51,7 @@ function StatsTable({
 
 // Live updating summary stats.
 export function StatsView() {
-  const stats = useQuery(api.params.stats);
+  const stats = useQuery(api.params.getStats);
   if (!stats) return <div>Loading...</div>;
 
   return (
